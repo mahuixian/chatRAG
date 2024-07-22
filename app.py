@@ -1,33 +1,20 @@
-from flask import Flask, request, jsonify, send_from_directory
-from flask_cors import CORS
-# import mimetypes
-# from rag.files.files import processFile
-# from werkzeug.utils import secure_filename
-from rag.utils import logger
 import os
-import sqlite3
 import jwt
 import datetime
+import json
 from dotenv import load_dotenv
-
+from database.connect import execute_query, fetch_one, fetch_all
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from rag.utils import logger
+from groq import Groq
+from uuid import uuid1
 
 app = Flask(__name__, static_folder='dist')
 CORS(app)
 
 load_dotenv()
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-database_url = os.getenv('DATABASE')
-
-
-def get_user_from_db(username):
-    conn = sqlite3.connect(database_url.replace('sqlite:///', ''))
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT user_id, password FROM users WHERE username=?", (username,))
-    user = cursor.fetchone()
-    conn.close()
-    return user
-
 
 @app.route('/api/urls', methods=['POST'])
 def receive_urls():
@@ -35,82 +22,100 @@ def receive_urls():
     urls = data.get('urls')
     username = data.get('username')
     logger.info('From %s Received URLs: %s', username, urls)
-    conn = sqlite3.connect(database_url.replace('sqlite:///', ''))
-    cursor = conn.cursor()
+    
     for url in urls:
-        cursor.execute("""
-            INSERT INTO uploads (username, type, file_name, status)
-            VALUES (?, 'URL', ?, 'pending')
-        """, (username, url))
-    conn.commit()
-    conn.close()
+        execute_query(
+            "INSERT INTO uploads (username, type, file_name, status) VALUES (?, 'URL', ?, 'pending')",
+            (username, url)
+        )
 
-    # 在这里处理接收到的URL
     return jsonify({'message': 'URLs received'}), 200
-
 
 @app.route('/api/files', methods=['POST', 'DELETE'])
 def receive_files():
     if 'files' not in request.files:
-        return jsonify({'message': 'No files provided'}), -2000
+        return jsonify({'message': 'No files provided'}), 400
 
     files = request.files.getlist('files')
     username = request.form.get('username')
-    logger.info('From %s Received Files: %s', username, files)
-    conn = sqlite3.connect(database_url.replace('sqlite:///', ''))
-    cursor = conn.cursor()
-
+    logger.info('From %s Received Files: %s', username, [file.filename for file in files])
+    
     for file in files:
         if file and file.filename:
-            file_name = file.filename
-            cursor.execute("""INSERT INTO uploads (username, type, file_name) VALUES (?, 'File', ?)""", (username, file_name))
+            execute_query(
+                "INSERT INTO uploads (username, type, file_name) VALUES (?, 'File', ?)",
+                (username, file.filename)
+            )
 
-    conn.commit()
-    conn.close()
-
-    return jsonify({'message': 'URLs received'}), 200
-
+    return jsonify({'message': 'Files received'}), 200
 
 @app.route('/api/images', methods=['POST', 'DELETE'])
 def receive_images():
-    # TODO 接收到image，读取image中的内容后存入数据库
     if 'images' not in request.files:
         return jsonify({'message': 'No images provided'}), 400
+
     images = request.files.getlist('images')
     username = request.form.get('username')
-    logger.info('From %s Received images: %s', username, images)
-
-    conn = sqlite3.connect(database_url.replace('sqlite:///', ''))
-    cursor = conn.cursor()
+    logger.info('From %s Received images: %s', username, [image.filename for image in images])
+    
     for image in images:
-        image_name = image.filename
-        cursor.execute("""
-                           INSERT INTO uploads (username, type, file_name)
-                           VALUES (?, 'File', ?)
-                           """, (username, image_name))
-    return jsonify({'message': 'images received'}), 200
+        execute_query(
+            "INSERT INTO uploads (username, type, file_name) VALUES (?, 'File', ?)",
+            (username, image.filename)
+        )
 
+    return jsonify({'message': 'Images received'}), 200
 
 @app.route('/api/remove', methods=['DELETE'])
 def remove():
     file_name = request.json.get('filename')
-    conn = sqlite3.connect(database_url.replace('sqlite:///', ''))
-    cursor = conn.cursor()
-    cursor.execute("""
-                    DELETE FROM uploads WHERE file_name = ?
-                    """, (file_name,))
-    return jsonify({'message': 'file removed'}), 200
-
+    execute_query(
+        "DELETE FROM uploads WHERE file_name = ?",
+        (file_name,)
+    )
+    logger.info('Removed file: %s', file_name)
+    return jsonify({'message': 'File removed'}), 200
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
     data = request.get_json()
-    message = data.get('content', '')
+    message = data.get('message')
+    username = data.get('username')
     
-    reply = "这是助手的回复：啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊啊" + message
-
-    return jsonify({'reply': reply}), 200
-
+    task_id = uuid1()
+    print(type(task_id))
+    #将query存储到数据库中
+    message = {'role': 'user', 'content': message}
+    
+    execute_query(
+        "INSERT INTO conversations (task_id, username, message) VALUES (?, ?, ?)",
+        (str(task_id), username, json.dumps(message))
+    )
+    
+    #从数据库中取history
+    history = fetch_all(
+        "SELECT task_id, message, reply FROM conversations WHERE username = ? ORDER BY created_at DESC",
+        (username,)
+    )
+    
+    task_id, query, reply = history[0]
+    if reply is None:
+        LLM = Groq(api_key="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")
+        llm_reply = LLM.chat.completions.create(
+            model='llama3-8b-8192',
+            messages=[json.loads(query)],
+            temperature=0,
+            stream=False
+        )
+        reply = llm_reply.choices[0].message.content
+    # history.append({'role': 'assistant', 'message': reply})
+        reply = {'role': 'assistant', 'content': reply}
+    execute_query(
+        "UPDATE conversations set reply = ? WHERE task_id = ? and username = ?",
+        (json.dumps(reply), task_id, username)
+    )
+    
+    return jsonify({'reply': reply['content']}), 200
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -118,18 +123,21 @@ def login():
     username = data.get('username')
     password = data.get('password')
 
-    user = get_user_from_db(username)
+    user = fetch_one(
+        "SELECT user_id, password FROM users WHERE username=?",
+        (username,)
+    )
 
     if user and user[1] == password:
         token = jwt.encode({
             'user_id': user[0],
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }, app.config['SECRET_KEY'], algorithm='HS256')
-        print(token)
+        logger.info('User %s logged in successfully', username)
         return jsonify({'success': True, 'token': token})
     else:
+        logger.warning('Invalid login attempt for user %s', username)
         return jsonify({'success': False, 'message': 'Invalid credentials'})
-
 
 if __name__ == '__main__':
     app.run(debug=True)

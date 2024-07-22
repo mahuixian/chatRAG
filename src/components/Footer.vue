@@ -20,8 +20,7 @@ export default {
   data() {
     return {
       input: '',
-      userId: '123',
-      username: 'admin'
+      username: localStorage.getItem('username') || ''
     };
   },
   methods: {
@@ -32,14 +31,13 @@ export default {
         console.log('Sending message:', this.input);
         const response = await axios.post('http://127.0.0.1:5000/api/chat', 
           { message: this.input,
-            userId: this.userId,
             username: this.username
           }
         );
         console.log('Message sent, response:', response.data);
 
         // 向事件总线发送消息，包括用户输入和后端返回的消息
-        EventBus.$emit('new-message', { type: 'user', content: { input: this.input, userId: this.userId } });
+        EventBus.$emit('new-message', { type: 'user', content: { input: this.input, username: this.username } });
         EventBus.$emit('new-message', { type: 'assistant', content: response.data });
 
         // 清空输入框内容

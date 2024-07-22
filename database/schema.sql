@@ -17,3 +17,13 @@ CREATE TABLE uploads (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+
+-- 创建存储上下文对话表
+CREATE TABLE conversations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL, --用于message和reply对应
+    username type VARCHAR(50) NOT NULL,
+    message TEXT, --用户输入
+    reply TEXT, --LLM输出
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

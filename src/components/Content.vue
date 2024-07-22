@@ -10,7 +10,7 @@
       <template v-else-if="message.type === 'assistant'">
         <div class="assistant-message">
           <span class="message-prefix">助手：</span>
-          <span class="message-content">{{ message.content.reply }}</span>
+          <span class="assistant-content">{{ message.content.reply }}</span>
         </div>
       </template>
     </div>
@@ -66,25 +66,24 @@ export default {
   font-weight: bold;
 }
 
-.assistant-message {
+.assistant-message { 
   display: flex;
-  justify-content: flex-start; /* 助手消息靠左对齐 */
-  align-items: flex-start; /* 助手消息垂直顶部对齐 */
+  justify-content: flex-start; 
+  align-items: flex-start;
 }
 
 .message-prefix {
-  flex: 10%; /* 设置助手前缀占据的宽度 */
+  flex: 5%; 
   font-weight: bold;
-  align-self: flex-start; /* 助手前缀垂直顶部对齐 */
+  align-self: flex-start; 
 }
 
 .assistant-content {
-  flex: 90%; /* 设置助手内容占据的宽度 */
+  flex: 95%; 
   word-wrap: break-word; /* 长文本自动换行 */
-  padding: 8px 12px; /* 文字内容的内边距 */
   background-color: #f8f9fa; /* 背景颜色 */
   border-radius: 10px; /* 圆角 */
+  align-items: flex-start;
 }
-
 
 </style>
