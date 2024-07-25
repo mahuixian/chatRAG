@@ -1,4 +1,4 @@
-# openrag
+# rag
 python database/init_db.py
 
 ## Project setup
