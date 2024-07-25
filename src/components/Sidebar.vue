@@ -78,6 +78,7 @@
 
 <script>
 import axios from 'axios';
+import { EventBus } from '../bus';
 
 export default {
   data() {
@@ -93,8 +94,16 @@ export default {
       pageSize: 7,
       currentPage: 1,
       username: localStorage.getItem('username') || '',
+      uploads: [],
     };
   },
+  //
+  created() {
+    console.log("created");
+    this.fetchUploads();
+    EventBus.$on('new-file', this.fetchUploads);
+  },
+  //
   computed: {
     pagedData() {
       const start = (this.currentPage - 1) * this.pageSize;
@@ -103,6 +112,31 @@ export default {
     },
   },
   methods: {
+
+    //
+    async fetchUploads() {
+      console.log("fetchUploads");
+      try {
+        if (this.username) {
+          const response = await axios.get(`http://127.0.0.1:8080/api/uploads/${this.username}`);
+          this.uploads = response.data;
+          this.updateSubmissionList();
+        }
+      } catch (error) {
+        console.error('Error fetching uploads:', error);
+      }
+    },
+    //
+
+    updateSubmissionList() {
+      this.submissionList = [...this.uploads.map(upload => ({
+        index: this.submissionList.length + 1,
+        type: upload.type,
+        file: upload.file_name,
+        status: upload.status,
+      }))]
+    },
+
     // 其他方法
     rowStyle() {
       return { height: '30px' }; // 自定义行高为 50px

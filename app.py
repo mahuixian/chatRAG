@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from database.connect import execute_query, fetch_one, fetch_all
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from database.models import Upload, Conversation
 from rag.utils import logger
 from groq import Groq
 from uuid import uuid1
@@ -138,6 +139,18 @@ def login():
     else:
         logger.warning('Invalid login attempt for user %s', username)
         return jsonify({'success': False, 'message': 'Invalid credentials'})
+
+@app.route('/api/uploads/<username>', methods=['GET'])
+def get_uploads(username):
+    print("============")
+    uploads = Upload.query.filter_by(username=username).order_by(Upload.created_at).all() #按照时间升序排序
+    return jsonify([upload.to_dict() for upload in uploads])
+
+@app.route('/api/conversations/<username>', methods=['GET'])
+def get_conversations(username):
+    conversations = Conversation.query.filter_by(username=username).order_by(Conversation.created_at).all() #按照时间升序排序
+    return jsonify([conversation.to_dict() for conversation in conversations])
+
 
 if __name__ == '__main__':
     app.run(debug=True)
