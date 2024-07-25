@@ -101,7 +101,7 @@ def chat():
     
     task_id, query, reply = history[0]
     if reply is None:
-        LLM = Groq(api_key="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")
+        LLM = Groq(api_key="")
         llm_reply = LLM.chat.completions.create(
             model='llama3-8b-8192',
             messages=[json.loads(query)],
