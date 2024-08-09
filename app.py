@@ -6,12 +6,10 @@ from dotenv import load_dotenv
 from database.connect import execute_query, fetch_one, fetch_all
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from rag.utils.logger import Logger
-from groq import Groq
+from rag.utils import logger
+from rag.llm.llm import llm_generator as LLM
 from uuid import uuid1
 load_dotenv()
-
-logger = Logger('logs/rag.log').logger  # init logger
 
 app = Flask(__name__, static_folder='dist')
 CORS(app)
@@ -120,13 +118,7 @@ def chat():
         
         task_id, query, reply = history[0]
         if reply is None:
-            LLM = Groq(api_key="")
-            llm_reply = LLM.chat.completions.create(
-                model='llama3-70b-8192',
-                messages=[json.loads(query)],
-                temperature=0,
-                stream=False
-            )
+            llm_reply = LLM.generate(json.loads(query)['content'])
             reply = llm_reply.choices[0].message.content
             logger.info(f"================= {task_id} =====================")
             logger.info(f"user: {json.loads(query)['content']}")
