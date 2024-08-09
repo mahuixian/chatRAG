@@ -79,8 +79,8 @@ export default {
   overflow-y: auto;
   padding: 10px;
   scrollbar-width: thin;
-  scrollbar-color: #a1c4fd #cfd9df; /* 渐变滚动条颜色 */
-  border-radius: 10px; /* 圆角 */
+  scrollbar-color: #a1c4fd #cfd9df; 
+  border-radius: 10px;
 }
 
 .history::-webkit-scrollbar {
@@ -88,12 +88,12 @@ export default {
 }
 
 .history::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #a1c4fd, #c2e9fb); /* 渐变色滚动条滑块 */
+  background: linear-gradient(to bottom, #a1c4fd, #c2e9fb); 
   border-radius: 10px;
 }
 
 .history::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #89cff0, #76c7e0); /* 悬停时的滑块颜色 */
+  background: linear-gradient(to bottom, #89cff0, #76c7e0);
 }
 
 .message {
@@ -156,74 +156,3 @@ export default {
   transform: scale(1.02);
 }
 </style>
-
-
-
-<!-- <style scoped>
-.history {
-  height: 80vh;
-  overflow-y: auto;
-  padding: 10px;
-
-  scrollbar-width: thin;
-  scrollbar-color: #888 #eaecec;
-  transition: all 0.3s ease-in-out;
-}
-
-.history::-webkit-scrollbar {
-  width: 8px;
-}
-
-.history::-webkit-scrollbar-thumb {
-  background-color: #888;
-  border-radius: 10px;
-}
-
-.history::-webkit-scrollbar-thumb:hover {
-  background-color: #555;
-}
-
-.message {
-  margin-bottom: 10px;
-}
-
-.user-message {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.user-message .message-content {
-  max-width: 50%; 
-  word-wrap: break-word; 
-  padding: 8px 12px; 
-  background-color: #eaecec; 
-  border-radius: 10px; 
-}
-
-.user-message .message-id {
-  margin-left: 10px;
-  font-weight: bold;
-}
-
-.assistant-message { 
-  display: flex;
-  align-items: flex-start;
-}
-
-.message-prefix {
-  margin-right: 8px;
-  white-space: nowrap;
-  font-weight: bold;
-}
-
-.assistant-content {
-  max-width: 80%;
-  word-wrap: break-word;
-  padding: 8px 12px;
-  background-color: aliceblue;
-  border-radius: 10px;
-  flex-shrink: 1;
-}
-
-</style> -->
