@@ -12,20 +12,17 @@ class Logger:
         :param log_format: 自定义日志格式 (默认: None)
         """
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)  # 默认记录所有级别的日志
+        self.logger.setLevel(logging.DEBUG)
 
-        # 如果没有提供日志格式，使用默认格式
         if not log_format:
             log_format = '%(asctime)s - %(levelname)s - %(message)s'
         formatter = logging.Formatter(log_format)
 
-        # 文件处理器 - 支持日志轮换
         file_handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=max_file_size, backupCount=backup_count)
+            log_file, maxBytes=max_file_size, backupCount=backup_count, encoding='utf-8')
         file_handler.setFormatter(formatter)
         self.logger.addHandler(file_handler)
 
-        # 控制台处理器
         if console_output:
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(formatter)

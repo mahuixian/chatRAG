@@ -65,12 +65,9 @@ def insert_users_from_json(db_path, users_path):
     conn.close()
 
 if __name__ == "__main__":
-    # Path to the schema file
+
     db_path = os.getenv('DATABASE').replace("sqlite:///", "")
     schema_path = os.getenv('SCHEMA')
     users_path = os.getenv('USERS')
-
-    # Initialize the database (schema creation)
     initialize_database(db_path, schema_path)
-    # Insert users from JSON file
     insert_users_from_json(db_path, users_path)

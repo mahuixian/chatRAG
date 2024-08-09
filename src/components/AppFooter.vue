@@ -13,8 +13,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import { EventBus } from '../bus';
+import { api } from '../api';
 
 export default {
   name: 'AppFooter',
@@ -28,23 +28,29 @@ export default {
     async sendMessage() {
       if (this.input.trim() === '') return;
 
+      //先将消息发送给事件总线
+      EventBus.$emit('new-message', { type: 'user', content: { input: this.input} });
+
+      //显示“等待中”
+      const waitingMessage = { type: 'assistant', content: { reply: '助手正在思考...' }};
+      EventBus.$emit('new-message', waitingMessage);
+
+      const userInput = this.input;
+      this.input = '';
+
       try {
-        console.log('Sending message:', this.input);
-        const response = await axios.post('http://127.0.0.1:5000/api/chat', 
-          { message: this.input,
+        console.log('Sending message:', userInput);
+        const response = await api.chat({ message: userInput,
             username: this.username
-          }
-        );
+        });
         console.log('Message sent, response:', response.data);
 
-        // 向事件总线发送消息，包括用户输入和后端返回的消息
-        EventBus.$emit('new-message', { type: 'user', content: { input: this.input, username: this.username } });
-        EventBus.$emit('new-message', { type: 'assistant', content: response.data });
+        //用response替换“等待中”
+        Object.assign(waitingMessage.content, response.data)
 
-        // 清空输入框内容
-        this.input = '';
       } catch (error) {
         console.error('Error sending message:', error);
+        waitingMessage.content.reply = '出现错误，请稍后重试。'
       }
     }
   }

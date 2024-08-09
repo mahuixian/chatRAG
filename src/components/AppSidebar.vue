@@ -78,8 +78,8 @@
 </template>
 
 <script>
-import axios from 'axios';
 import { EventBus } from '../bus';
+import { api } from '../api';
 
 export default {
   data() {
@@ -118,7 +118,7 @@ export default {
       console.log("fetchUploads");
       try {
         if (this.username) {
-          const response = await axios.get(`http://127.0.0.1:5000/api/uploads/${this.username}`);
+          const response = await api.getUploads(this.username);
           this.uploads = response.data;
           this.updateSubmissionList();
         }
@@ -194,16 +194,14 @@ export default {
 
       if (urls.length > 0) {
         try {
-          const response = await axios.post('http://127.0.0.1:5000/api/urls', { 
-            urls: urls, 
-            username: this.username
-          },{
-              headers: {
-            'Content-Type': 'application/json'
-          } 
-        });
+          const response = await api.receiveUrls(
+            {
+              urls: urls,
+              username: this.username
+            }
+          );
           if (response.status === 200) {
-            this.submissionList = this.submissionList.map(item => item.type === 'URL' ? { ...item, status: 'Uploaded' } : item);
+              this.submissionList = this.submissionList.map(item => item.type === 'URL' ? { ...item, status: 'Uploaded' } : item);
           }
         } catch (error) {
           console.error('Error uploading URLs:', error);
@@ -220,11 +218,7 @@ export default {
         });
 
         try {
-          const response = await axios.post('http://127.0.0.1:5000/api/files', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            },
-          });
+          const response = await api.receiveFiles(formData);
           if (response.status === 200) {
             this.submissionList = this.submissionList.map(item => item.type === 'File' ? { ...item, status: 'Uploaded' } : item);
           }
@@ -242,11 +236,7 @@ export default {
         });
 
         try {
-          const response = await axios.post('http://127.0.0.1:5000/api/images', formData, {
-            headers: {
-              'Content-Type': 'multipart/form-data'
-            },
-          });
+          const response = await api.receiveImages(formData);
           if (response.status === 200) {
             this.submissionList = this.submissionList.map(item => item.type === 'Image' ? { ...item, status: 'Uploaded' } : item);
           }
@@ -267,9 +257,7 @@ export default {
       console.log(row.file)
       try {
         let response;
-        response = await axios.delete('http://127.0.0.1:5000/api/remove', { 
-          data: { filename: row.file, username: this.username}
-        });
+        response = await api.removeFile(row.file, this.username);
         if (response.status === 200) {
           this.submissionList.splice(index, 1);
           this.handlePageChange(this.currentPage);

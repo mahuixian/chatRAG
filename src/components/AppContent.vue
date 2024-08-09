@@ -17,8 +17,9 @@
 </template>
 
 <script>
-import axios from 'axios';
+// import axios from 'axios';
 import { EventBus } from '../bus';
+import { api } from '../api';
 
 export default {
   name: 'AppContent',
@@ -33,17 +34,21 @@ export default {
       this.messages.push(message);
       this.scrollToBottom();
     });
-    EventBus.$on('new-input', input => {
-      this.messages.push({ type: 'user', content: input });
-      this.scrollToBottom();
-    });
+  },
+
+  watch: {
+    messages() {
+      this.$nextTick(() => {
+        this.scrollToBottom();
+      });
+    }
   },
 
   methods: {
     async loadConversations() {
       try {
         const username = localStorage.getItem('username');
-        const response = await axios.get(`http://127.0.0.1:5000/api/conversations/${username}`);
+        const response = await api.getConversations(username);
         const conversations = response.data;
 
         console.log(conversations);
