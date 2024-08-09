@@ -84,8 +84,8 @@ export default {
   overflow-y: auto;
   padding: 10px;
   scrollbar-width: thin;
-  scrollbar-color: #a1c4fd #cfd9df; 
-  border-radius: 10px;
+  scrollbar-color: #a1c4fd #cfd9df;
+  border-radius: 10px; 
 }
 
 .history::-webkit-scrollbar {
@@ -93,12 +93,12 @@ export default {
 }
 
 .history::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #a1c4fd, #c2e9fb); 
+  background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
   border-radius: 10px;
 }
 
 .history::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #89cff0, #76c7e0);
+  background: linear-gradient(to bottom, #89cff0, #76c7e0); 
 }
 
 .message {
