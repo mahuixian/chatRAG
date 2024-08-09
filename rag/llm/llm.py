@@ -41,7 +41,7 @@ class LLMGenerator:
                     model=self.model_name,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0,
-                    #top_p=0.7,
+                    top_p=0.7,
                     stream=True
                 )
             elif self.llm_name == 'ZhipuAI':
@@ -49,7 +49,7 @@ class LLMGenerator:
                     model=self.model_name,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.1,
-                    #top_p=0.7,
+                    top_p=0.7,
                     stream=True
                 )
             return response
@@ -61,7 +61,7 @@ class LLMGenerator:
                         response_format={"type": "json_object"},
                         messages=[{"role": "user", "content": prompt}],
                         temperature=0,
-                        #top_p=0.7,
+                        top_p=0.7,
                         stream=False
                     )
                 else:
@@ -69,7 +69,7 @@ class LLMGenerator:
                         model=self.model_name,
                         messages=[{"role": "user", "content": prompt}],
                         temperature=0,
-                        #top_p=0.7,
+                        top_p=0.7,
                         stream=False
                     )
             elif self.llm_name == 'ZhipuAI':
@@ -77,7 +77,7 @@ class LLMGenerator:
                     model=self.model_name,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.1,
-                    #top_p=0.7,
+                    top_p=0.7,
                     stream=False
                 )
             return response

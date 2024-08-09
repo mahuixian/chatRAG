@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
     <div class="login-container">
         <el-form :model="form" ref="form" label-width="80px" class="login-form">
@@ -18,7 +19,7 @@
 import axios from 'axios';
 
 export default {
-    name: 'Login',
+    name: 'MainLogin',
     data() {
         return {
             form: {
@@ -44,7 +45,7 @@ export default {
                             if (response.data.success) {
                                 localStorage.setItem('token', response.data.token); // 设置token
                                 localStorage.setItem('username', this.form.username);
-                                this.$router.push({ path: '/' });
+                                this.$router.push({ name: 'Main' });
                             } else {
                                 this.$message.error('用户名或密码错误');
                             }

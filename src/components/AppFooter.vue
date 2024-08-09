@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <div class="footer">
     <el-input
@@ -16,7 +17,7 @@ import axios from 'axios';
 import { EventBus } from '../bus';
 
 export default {
-  name: 'Footer',
+  name: 'AppFooter',
   data() {
     return {
       input: '',

@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
   <el-container :class="['main-sidebar', { collapsed: isSidebarCollapsed }]">
     <el-header class="header">
@@ -112,13 +113,12 @@ export default {
     },
   },
   methods: {
-
-    //
+    //页面刷新保留
     async fetchUploads() {
       console.log("fetchUploads");
       try {
         if (this.username) {
-          const response = await axios.get(`http://127.0.0.1:8080/api/uploads/${this.username}`);
+          const response = await axios.get(`http://127.0.0.1:5000/api/uploads/${this.username}`);
           this.uploads = response.data;
           this.updateSubmissionList();
         }
@@ -127,7 +127,7 @@ export default {
       }
     },
     //
-
+    //更新submissionList，确保在页面刷新时保留已上传内容
     updateSubmissionList() {
       this.submissionList = [...this.uploads.map(upload => ({
         index: this.submissionList.length + 1,

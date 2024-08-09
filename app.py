@@ -6,15 +6,14 @@ from dotenv import load_dotenv
 from database.connect import execute_query, fetch_one, fetch_all
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from database.models import Upload, Conversation
-from rag.utils import logger
+from rag.utils.logger import Logger
 from groq import Groq
 from uuid import uuid1
+load_dotenv()
+logger = Logger('logs/rag.log').logger
 
 app = Flask(__name__, static_folder='dist')
 CORS(app)
-
-load_dotenv()
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 @app.route('/api/urls', methods=['POST'])
@@ -22,15 +21,15 @@ def receive_urls():
     data = request.json
     urls = data.get('urls')
     username = data.get('username')
-    logger.info('From %s Received URLs: %s', username, urls)
-    
+    logger.info(f'From {username} Received URLs: {urls}')
+
     for url in urls:
         execute_query(
             "INSERT INTO uploads (username, type, file_name, status) VALUES (?, 'URL', ?, 'pending')",
             (username, url)
         )
-
     return jsonify({'message': 'URLs received'}), 200
+
 
 @app.route('/api/files', methods=['POST', 'DELETE'])
 def receive_files():
@@ -39,7 +38,7 @@ def receive_files():
 
     files = request.files.getlist('files')
     username = request.form.get('username')
-    logger.info('From %s Received Files: %s', username, [file.filename for file in files])
+    logger.info(f'From {username} Received Files: {[file.filename for file in files]}')
     
     for file in files:
         if file and file.filename:
@@ -50,6 +49,7 @@ def receive_files():
 
     return jsonify({'message': 'Files received'}), 200
 
+
 @app.route('/api/images', methods=['POST', 'DELETE'])
 def receive_images():
     if 'images' not in request.files:
@@ -57,7 +57,7 @@ def receive_images():
 
     images = request.files.getlist('images')
     username = request.form.get('username')
-    logger.info('From %s Received images: %s', username, [image.filename for image in images])
+    logger.info(f'From {username} Received images: {[image.filename for image in images]}')
     
     for image in images:
         execute_query(
@@ -67,6 +67,7 @@ def receive_images():
 
     return jsonify({'message': 'Images received'}), 200
 
+
 @app.route('/api/remove', methods=['DELETE'])
 def remove():
     file_name = request.json.get('filename')
@@ -74,8 +75,9 @@ def remove():
         "DELETE FROM uploads WHERE file_name = ?",
         (file_name,)
     )
-    logger.info('Removed file: %s', file_name)
+    logger.info(f'Removed file: {file_name}')
     return jsonify({'message': 'File removed'}), 200
+
 
 @app.route("/api/chat", methods=["POST"])
 def chat():
@@ -103,12 +105,14 @@ def chat():
     if reply is None:
         LLM = Groq(api_key="")
         llm_reply = LLM.chat.completions.create(
-            model='llama3-8b-8192',
+            model='llama3-70b-8192',
             messages=[json.loads(query)],
             temperature=0,
             stream=False
         )
         reply = llm_reply.choices[0].message.content
+        print("===================================")
+        print(reply)
     # history.append({'role': 'assistant', 'message': reply})
         reply = {'role': 'assistant', 'content': reply}
     execute_query(
@@ -117,6 +121,7 @@ def chat():
     )
     
     return jsonify({'reply': reply['content']}), 200
+
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -134,22 +139,61 @@ def login():
             'user_id': user[0],
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }, app.config['SECRET_KEY'], algorithm='HS256')
-        logger.info('User %s logged in successfully', username)
+        logger.info(f'User {username} logged in successfully')
         return jsonify({'success': True, 'token': token})
     else:
-        logger.warning('Invalid login attempt for user %s', username)
+        logger.warning(f'Invalid login attempt for user {username}')
         return jsonify({'success': False, 'message': 'Invalid credentials'})
+
 
 @app.route('/api/uploads/<username>', methods=['GET'])
 def get_uploads(username):
-    print("============")
-    uploads = Upload.query.filter_by(username=username).order_by(Upload.created_at).all() #按照时间升序排序
-    return jsonify([upload.to_dict() for upload in uploads])
+    query = '''
+    SELECT id, username, type, file_name, status, created_at
+    FROM uploads
+    WHERE username = ?
+    ORDER BY created_at
+    '''
+    rows = fetch_all(query, (username,))
+    
+    # 将结果转换为字典列表
+    uploads = []
+    for row in rows:
+        uploads.append({
+            'id': row[0],
+            'username': row[1],
+            'type': row[2],
+            'file_name': row[3],
+            'status': row[4],
+            'created_at': row[5]
+        })
+    
+    return jsonify(uploads)
+
 
 @app.route('/api/conversations/<username>', methods=['GET'])
 def get_conversations(username):
-    conversations = Conversation.query.filter_by(username=username).order_by(Conversation.created_at).all() #按照时间升序排序
-    return jsonify([conversation.to_dict() for conversation in conversations])
+    query = '''
+    SELECT id, task_id, username, message, reply, created_at
+    FROM conversations
+    WHERE username = ?
+    ORDER BY created_at
+    '''
+    rows = fetch_all(query, (username,))
+    
+    # 将结果转换为字典列表
+    conversations = []
+    for row in rows:
+        conversations.append({
+            'id': row[0],
+            'task_id': row[1],
+            'username': row[2],
+            'message': row[3],
+            'reply': row[4],
+            'created_at': row[5]
+        })
+    
+    return jsonify(conversations)
 
 
 if __name__ == '__main__':
