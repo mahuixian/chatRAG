@@ -80,6 +80,7 @@
 <script>
 import { EventBus } from '../bus';
 import { api } from '../api';
+// import { Form } from 'element-ui';
 
 export default {
   data() {
@@ -178,72 +179,137 @@ export default {
       const urls = this.urlsInput.split('\n').filter(url => url.trim() !== '');
 
       // Add URLs to submission list
-      urls.forEach(url => {
-        this.submissionList.push({ index: this.submissionList.length + 1, type: 'URL', file: url, status: 'Pending' });
-      });
-
-      // Add Files to submission list
-      this.fileList.forEach(file => {
-        this.submissionList.push({ index: this.submissionList.length + 1, type: 'File', file: file.name, status: 'Pending' });
-      });
-
-      // Add Images to submission list
-      this.imageList.forEach(image => {
-        this.submissionList.push({ index: this.submissionList.length + 1, type: 'Image', file: image.name, status: 'Pending' });
-      });
+      // urls.forEach(url => {
+      //   this.submissionList.push({ index: this.submissionList.length + 1, type: 'URL', file: url, status: 'Pending' });
+      // });
 
       if (urls.length > 0) {
-        try {
-          const response = await api.receiveUrls(
-            {
-              urls: urls,
+        for (const url of urls) {
+          this.submissionList.push({ index: this.submissionList.length + 1, type: 'URL', file: url, status: 'Pending' });
+          
+          try {
+            const response = await api.uploadData({
+              url: url,
               username: this.username
+            }, 'url');
+            if (response.status === 200) {
+              this.submissionList = this.submissionList.map(item => 
+                item.type === 'URL' ? { ...item, status: 'Uploaded '} : item
+              );
             }
-          );
-          if (response.status === 200) {
-              this.submissionList = this.submissionList.map(item => item.type === 'URL' ? { ...item, status: 'Uploaded' } : item);
+          } catch (error) {
+            console.error(`Error uploading URL.: `, error);
           }
-        } catch (error) {
-          console.error('Error uploading URLs:', error);
         }
       }
+
+
+      // Add Files to submission list
+      // this.fileList.forEach(file => {
+      //   this.submissionList.push({ index: this.submissionList.length + 1, type: 'File', file: file.name, status: 'Pending' });
+      // });
+
+
+      if (Array.isArray(this.fileList) && this.fileList.length > 0) {
+        for (const file of this.fileList) {
+          this.submissionList.push({ index: this.submissionList.length + 1, type: 'File', file: file.name, status: 'Pending' });
+
+          const formData = new FormData();
+          formData.append('username', this.username);
+          formData.append('file', file.raw);
+          try {
+            const response = await api.uploadData(formData, 'File');
+            if (response.status === 200) {
+              this.submissionList = this.submissionList.map(item =>
+                item.file === file.name ? { ...item, status: 'Uploaded' } : item
+              );
+            }
+          } catch (error) {
+            console.error(`Error uploading file ${file.name}`, error);
+          }
+        }
+      }
+
+      if (Array.isArray(this.imageList) && this.imageList.length > 0) {
+        for (const file of this.imageList) {
+          this.submissionList.push({ index: this.submissionList.length + 1, type: 'Image', file: file.name, status: 'Pending' });
+
+          const formData = new FormData();
+          formData.append('username', this.username);
+          formData.append('file', file.raw);
+          try {
+            const response = await api.uploadData(formData, 'Image');
+            if (response.status === 200) {
+              this.submissionList = this.submissionList.map(item =>
+                item.file === file.name ? { ...item, status: 'Uploaded' } : item
+              );
+            }
+          } catch (error) {
+            console.error(`Error uploading file ${file.name}`, error);
+          }
+        }
+      }
+      
+
+      // Add Images to submission list
+      // this.imageList.forEach(image => {
+      //   this.submissionList.push({ index: this.submissionList.length + 1, type: 'Image', file: image.name, status: 'Pending' });
+      // });
+
+      // if (urls.length > 0) {
+      //   try {
+      //     const response = await api.receiveUrls(
+      //       {
+      //         urls: urls,
+      //         username: this.username
+      //       }
+      //     );
+      //     if (response.status === 200) {
+      //         this.submissionList = this.submissionList.map(item => item.type === 'URL' ? { ...item, status: 'Uploaded' } : item);
+      //     }
+      //   } catch (error) {
+      //     console.error('Error uploading URLs:', error);
+      //   }
+      // }
+
+      
 
       // Send Files to the server
-      if (Array.isArray(this.fileList) && this.fileList.length > 0) {
-        const formData = new FormData();
-        formData.append('username', this.username);
-        this.fileList.forEach(file => {
-          console.log(file.raw)
-          formData.append('files', file.raw);
-        });
+      // if (Array.isArray(this.fileList) && this.fileList.length > 0) {
+      //   const formData = new FormData();
+      //   formData.append('username', this.username);
+      //   this.fileList.forEach(file => {
+      //     console.log(file.raw)
+      //     formData.append('files', file.raw);
+      //   });
 
-        try {
-          const response = await api.receiveFiles(formData);
-          if (response.status === 200) {
-            this.submissionList = this.submissionList.map(item => item.type === 'File' ? { ...item, status: 'Uploaded' } : item);
-          }
-        } catch (error) {
-          console.error('Error uploading files:', error);
-        }
-      }
+      //   try {
+      //     const response = await api.receiveFiles(formData);
+      //     if (response.status === 200) {
+      //       this.submissionList = this.submissionList.map(item => item.type === 'File' ? { ...item, status: 'Uploaded' } : item);
+      //     }
+      //   } catch (error) {
+      //     console.error('Error uploading files:', error);
+      //   }
+      // }
 
       // Send Images to the server
-      if (Array.isArray(this.imageList) && this.imageList.length > 0) {
-        const formData = new FormData();
-        formData.append('username', this.username);
-        this.imageList.forEach(image => {
-          formData.append('images', image.raw);
-        });
+      // if (Array.isArray(this.imageList) && this.imageList.length > 0) {
+      //   const formData = new FormData();
+      //   formData.append('username', this.username);
+      //   this.imageList.forEach(image => {
+      //     formData.append('images', image.raw);
+      //   });
 
-        try {
-          const response = await api.receiveImages(formData);
-          if (response.status === 200) {
-            this.submissionList = this.submissionList.map(item => item.type === 'Image' ? { ...item, status: 'Uploaded' } : item);
-          }
-        } catch (error) {
-          console.error('Error uploading images:', error);
-        }
-      }
+      //   try {
+      //     const response = await api.receiveImages(formData);
+      //     if (response.status === 200) {
+      //       this.submissionList = this.submissionList.map(item => item.type === 'Image' ? { ...item, status: 'Uploaded' } : item);
+      //     }
+      //   } catch (error) {
+      //     console.error('Error uploading images:', error);
+      //   }
+      // }
         
       this.urlsInput = '';
       this.fileList = [];
@@ -257,7 +323,7 @@ export default {
       console.log(row.file)
       try {
         let response;
-        response = await api.removeFile(row.file, this.username);
+        response = await api.removeFile({ filename: row.file, username: this.username });
         if (response.status === 200) {
           this.submissionList.splice(index, 1);
           this.handlePageChange(this.currentPage);

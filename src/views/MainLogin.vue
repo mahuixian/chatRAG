@@ -16,7 +16,8 @@
 </template>
 
 <script>
-import axios from 'axios';
+// import axios from 'axios';
+import { api } from '../api'
 
 export default {
     name: 'MainLogin',
@@ -37,29 +38,58 @@ export default {
         };
     },
     methods: {
-        handleLogin() {
-            this.$refs.form.validate((valid) => {
+        async handleLogin() {
+            try {
+                // 验证表单
+                const valid = await new Promise((resolve) => {
+                    this.$refs.form.validate((valid) => {
+                        resolve(valid);
+                    });
+                });
+
                 if (valid) {
-                    axios.post('http://127.0.0.1:5000/api/login', this.form)
-                        .then(response => {
-                            if (response.data.success) {
-                                localStorage.setItem('token', response.data.token); // 设置token
-                                localStorage.setItem('username', this.form.username);
-                                this.$router.push({ name: 'Main' });
-                            } else {
-                                this.$message.error('用户名或密码错误');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Login error:', error);
-                            this.$message.error('登录失败，请稍后再试');
-                        });
+                    // 执行登录请求
+                    // const response = await axios.post('http://127.0.0.1:5000/api/login', this.form);
+                    const response = await api.login(this.form)
+
+                    if (response.data.success) {
+                        localStorage.setItem('token', response.data.token); // 设置 token
+                        localStorage.setItem('username', this.form.username);
+                        this.$router.push({ name: 'Main' });
+                    } else {
+                        this.$message.error('用户名或密码错误');
+                    }
                 } else {
                     console.log('error submit!!');
-                    return false;
                 }
-            });
+            } catch (error) {
+                console.error('Login error:', error);
+                this.$message.error('登录失败，请稍后再试');
+            }
         }
+        // handleLogin() {
+        //     this.$refs.form.validate((valid) => {
+        //         if (valid) {
+        //             axios.post('http://127.0.0.1:5000/api/login', this.form)
+        //                 .then(response => {
+        //                     if (response.data.success) {
+        //                         localStorage.setItem('token', response.data.token); // 设置token
+        //                         localStorage.setItem('username', this.form.username);
+        //                         this.$router.push({ name: 'Main' });
+        //                     } else {
+        //                         this.$message.error('用户名或密码错误');
+        //                     }
+        //                 })
+        //                 .catch(error => {
+        //                     console.error('Login error:', error);
+        //                     this.$message.error('登录失败，请稍后再试');
+        //                 });
+        //         } else {
+        //             console.log('error submit!!');
+        //             return false;
+        //         }
+        //     });
+        // }
     }
 };
 </script>
